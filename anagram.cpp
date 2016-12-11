@@ -55,6 +55,9 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
 
         for(auto & c: word)
         {
+            if(c == '\'')
+                continue;
+
             if(c < 'A' || c > 'Z' || word_ltrs[c - 'A'] == 0)
             {
                 use_word = false;
@@ -73,13 +76,17 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
 
             std::size_t ltr_count = 0;
             std::string anagram;
-            for(const auto & word: new_prefix)
+            for(const auto & prefix_word: new_prefix)
             {
-                ltr_count += word.size();
+                for(auto & c: prefix_word)
+                {
+                    if(c != '\'')
+                        ++ltr_count;
+                }
 
                 if(!anagram.empty())
                     anagram += " ";
-                anagram += word;
+                anagram += prefix_word;
             }
 
             if(permutations || !seen_groups.count(anagram))
@@ -240,23 +247,30 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
-    std::string start;
-    for(auto & i: vm["text"].as<std::vector<std::string>>())
-        start += i;
-
+    // get letter counts
     std::array<std::size_t, ALPHABET_LEN> ltrs;
     std::fill(ltrs.begin(), ltrs.end(), 0);
-    for(auto & c: start)
+
+    std::size_t start_ltr_count = 0;
+    for(auto & word: vm["text"].as<std::vector<std::string>>())
     {
-        c = std::toupper(c);
-        if(c < 'A' || c > 'Z')
+        for(auto c: word)
         {
-            std::cerr<<"Illegal character in input: '"<<c<<"'"<<std::endl;
-            return EXIT_FAILURE;
+            if(c == '\'')
+                continue;
+
+            c = std::toupper(c);
+            if(c < 'A' || c > 'Z')
+            {
+                std::cerr<<"Illegal character in input: '"<<c<<"'"<<std::endl;
+                return EXIT_FAILURE;
+            }
+            ++ltrs[c - 'A'];
+            ++start_ltr_count;
         }
-        ++ltrs[c - 'A'];
     }
 
+    // open dictionary file
     std::ifstream dictionary_file(vm["dictionary"].as<std::string>());
     try
     {
@@ -307,7 +321,7 @@ int main(int argc, char * argv[])
     }
 
     std::unordered_set<std::string> seen_groups;
-    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, vm.count("show-partial") > 0, vm.count("permutations") > 0, start.size());
+    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, vm.count("show-partial") > 0, vm.count("permutations") > 0, start_ltr_count);
 
     return EXIT_SUCCESS;
 }

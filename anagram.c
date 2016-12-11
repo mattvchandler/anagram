@@ -123,8 +123,11 @@ void find_words(const size_t ltrs[ALPHABET_LEN],
 
         bool use_word = true;
 
-        for(char * c = g_ptr_array_index(word_list, word_i); *c; ++c)
+        for(const char * c = g_ptr_array_index(word_list, word_i); *c; ++c)
         {
+            if(*c == '\'')
+                continue;
+
             if(*c < 'A' || *c > 'Z' || word_ltrs[*c - 'A'] == 0)
             {
                 use_word = false;
@@ -151,11 +154,16 @@ void find_words(const size_t ltrs[ALPHABET_LEN],
             GString * anagram = g_string_new("");
             for(size_t i = 0; i < new_prefix->len; ++i)
             {
-                ltr_count += strlen(g_ptr_array_index(new_prefix, i));
+                const char * prefix_word = g_ptr_array_index(new_prefix, i);
+                for(const char * c = prefix_word; *c; ++c)
+                {
+                    if(*c != '\'')
+                        ++ltr_count;
+                }
 
                 if(anagram->len != 0)
                     g_string_append(anagram, " ");
-                g_string_append(anagram, g_ptr_array_index(new_prefix, i));
+                g_string_append(anagram, prefix_word);
             }
 
             if(permutations || !g_hash_table_lookup_extended(seen_groups, anagram->str, NULL, NULL))
@@ -263,27 +271,27 @@ int main(int argc, char * argv[])
         }
     }
 
-    // concatenate text
-    GString * start = g_string_new("");
-    for(int i = optind; i < argc; ++i)
-        g_string_append(start, argv[i]);
-
+    // get letter counts
+    size_t start_ltr_count = 0;
     size_t ltrs[ALPHABET_LEN] = {0};
-    for(char * c = start->str; *c; ++c)
+    for(int i = optind; i < argc; ++i)
     {
-        *c = toupper(*c);
-        if(*c < 'A' || *c > 'Z')
+        for(char * c = argv[i]; *c; ++c)
         {
-            fprintf(stderr, "Illegal character in input: '%c'\n", *c);
-            g_string_free(start, true);
-            free(dictionary_filename);
-            return EXIT_FAILURE;
-        }
-        ++ltrs[*c - 'A'];
-    }
+            if(*c == '\'')
+                continue;
 
-    size_t start_len = start->len;
-    g_string_free(start, true);
+            *c = toupper(*c);
+            if(*c < 'A' || *c > 'Z')
+            {
+                fprintf(stderr, "Illegal character in input: '%c'\n", *c);
+                free(dictionary_filename);
+                return EXIT_FAILURE;
+            }
+            ++ltrs[*c - 'A'];
+            ++start_ltr_count;
+        }
+    }
 
     // open dictionary file
     FILE * dictionary_file = fopen(dictionary_filename, "r");
@@ -303,18 +311,8 @@ int main(int argc, char * argv[])
     {
         line[strlen(line) - 1] = '\0';
 
-        bool skip_word = false;
         for(char * c = line; *c; ++c)
-        {
             *c = toupper(*c);
-            if(*c < 'A' || *c > 'Z')
-            {
-                skip_word = true;
-                break;
-            }
-        }
-        if(skip_word)
-            continue;
 
         if(strlen(line) <= 2)
         {
@@ -368,7 +366,7 @@ int main(int argc, char * argv[])
 
     GHashTable * seen_groups = g_hash_table_new_full(&g_str_hash, &g_str_equal, &free, NULL);
     GPtrArray * prefix = g_ptr_array_new_with_free_func(&free);
-    find_words(ltrs, dictionary, prefix, seen_groups, show_partial, permutations, start_len);
+    find_words(ltrs, dictionary, prefix, seen_groups, show_partial, permutations, start_ltr_count);
 
     g_hash_table_destroy(seen_groups);
     g_ptr_array_free(prefix, true);
