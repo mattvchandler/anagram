@@ -38,19 +38,10 @@ p.add_argument("start", metavar = "TEXT", nargs = '+',
 
 args = p.parse_args()
 
-start = "".join(args.start).upper()
-
-for i in start:
-    if i not in [chr(ord('A') + i) for i in range(26)]:
-        print("Illegal character in input:", i)
-        sys.exit(1)
-
-from copy import deepcopy
-
 seen_groups = set()
 
 def find_words(ltrs, word_list, prefix = tuple()):
-    if sum(ltrs.values()) == 0:
+    if sum(ltrs) == 0:
         return
 
     new_word_list = []
@@ -58,15 +49,13 @@ def find_words(ltrs, word_list, prefix = tuple()):
     new_prefixes = []
 
     for word in word_list:
-        word_ltrs = deepcopy(ltrs)
-        for l in word:
-            if l not in word_ltrs:
+        word_ltrs = ltrs[:]
+        for c in word:
+            c = ord(c)
+            if c < ord('A') or c > ord('Z') or word_ltrs[c - ord('A')] == 0:
                 break
 
-            if word_ltrs[l] == 0:
-                break
-
-            word_ltrs[l] -= 1
+            word_ltrs[c - ord('A')] -= 1
         else:
             new_prefix = prefix + (word,)
 
@@ -96,12 +85,16 @@ def find_words(ltrs, word_list, prefix = tuple()):
     for new_word, new_ltrs, new_prefix in zip(new_word_list, new_word_ltrs, new_prefixes):
         find_words(new_ltrs, new_word_list, new_prefix)
 
-ltrs = {}
+start = "".join(args.start).upper()
+
+for i in start:
+    if i not in [chr(ord('A') + i) for i in range(26)]:
+        print("Illegal character in input:", i)
+        sys.exit(1)
+
+ltrs = [0] * 26
 for l in start:
-    if l not in ltrs:
-        ltrs[l] = 1
-    else:
-        ltrs[l] += 1
+    ltrs[ord(l) - ord('A')] += 1
 
 def legal_word(word):
     word = word.strip().upper()
