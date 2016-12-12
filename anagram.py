@@ -30,6 +30,9 @@ p.add_argument("-p", "--show-partial", action="store_true",
 p.add_argument("-r", "--permutations", action="store_true",
         help = "Generate each permutation instead of each combination. Much slower, but uses much less memory")
 
+p.add_argument("-n", "--no-apostrophe", action="store_true",
+        help = "Don't generate words with apostrophes")
+
 p.add_argument("-d", "--dictionary", default="/usr/share/dict/words",
         help = "Dictionary file (defaults to /usr/share/dict/words)")
 
@@ -37,6 +40,8 @@ p.add_argument("start", metavar = "TEXT", nargs = '+',
         help = "Text to generate anagrams for")
 
 args = p.parse_args()
+
+use_apostrophe = not args.no_apostrophe
 
 seen_groups = set()
 
@@ -67,7 +72,9 @@ def find_words(ltrs, word_list, prefix = tuple()):
                 new_prefix = tuple(sorted(new_prefix))
 
             anagram = " ".join(new_prefix)
-            ltr_count = sum((len(i) for i in new_prefix)) - anagram.count("'")
+            ltr_count = sum((len(i) for i in new_prefix))
+            if use_apostrophe:
+                ltr_count -= anagram.count("'")
 
             if args.permutations or anagram not in seen_groups:
                 if args.show_partial:
@@ -111,7 +118,7 @@ for word in open(args.dictionary, "r").readlines():
     word = word.strip().upper()
     skip_word = False
     for c in word:
-        if ord(c) < ord('A') or ord(c) > ord('Z'):
+        if (not use_apostrophe or c != "'") and (ord(c) < ord('A') or ord(c) > ord('Z')):
             skip_word = True
             break
 

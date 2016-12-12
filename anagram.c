@@ -100,6 +100,7 @@ void find_words(const size_t ltrs[ALPHABET_LEN],
                 GHashTable * seen_groups,
                 const bool show_partial,
                 const bool permutations,
+                const bool use_apostrophe,
                 const size_t start_ltr_count)
 {
     size_t sum_ltrs = 0;
@@ -203,6 +204,7 @@ void find_words(const size_t ltrs[ALPHABET_LEN],
                    seen_groups,
                    show_partial,
                    permutations,
+                   use_apostrophe,
                    start_ltr_count);
 
     g_array_free(new_ltrs, true);
@@ -214,6 +216,7 @@ int main(int argc, char * argv[])
 {
     bool show_partial = false;
     bool permutations = false;
+    bool use_apostrophe = true;
     char * dictionary_filename = strdup("/usr/share/dict/words");
 
     int opt = 0;
@@ -225,7 +228,8 @@ int main(int argc, char * argv[])
         {"help", no_argument, NULL, 'h'},
         {"dictionary", required_argument, NULL, 'd'},
         {"show-partial", no_argument, NULL, 'p'},
-        {"permutations", no_argument, NULL, 'r'}
+        {"permutations", no_argument, NULL, 'r'},
+        {"no-apostrophe", no_argument, NULL, 'n'},
     };
 
     char * prog_name = argv[0] + strlen(argv[0]);
@@ -233,7 +237,7 @@ int main(int argc, char * argv[])
         --prog_name;
 
     int ind = 0;
-    while((opt = getopt_long(argc, argv, ":hd:pr", longopts, &ind)) != -1)
+    while((opt = getopt_long(argc, argv, ":hd:prn", longopts, &ind)) != -1)
     {
         switch(opt)
         {
@@ -247,8 +251,11 @@ int main(int argc, char * argv[])
         case 'r':
             permutations = true;
             break;
+        case 'n':
+            use_apostrophe = false;
+            break;
         case 'h':
-            printf("usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n\n", prog_name);
+            printf("usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n\n", prog_name);
             puts(
                 "Anagram generator\n\n"
                 "positional arguments:\n"
@@ -259,18 +266,19 @@ int main(int argc, char * argv[])
                 "                        by an '*'\n"
                 "  -r, --permutations    Generate each permutation instead of each combination\n"
                 "                        Much slower, but uses much less memory\n"
+                "  -n, --no-apostrophe   Don't generate words with apostrophes\n"
                 "  -d DICTIONARY, --dictionary DICTIONARY\n"
                 "                        Dictionary file (defaults to /usr/share/dict/words)");
             return EXIT_SUCCESS;
         case ':':
             fprintf(stderr, "Argument required for -%c\n", (char)optopt);
-            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         case '?':
         default:
             fprintf(stderr, "Unknown option: -%c\n", (char)optopt);
-            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         }
@@ -320,7 +328,7 @@ int main(int argc, char * argv[])
         for(char * c = word; *c; ++c)
         {
             *c = toupper(*c);
-            if(*c < 'A' || *c > 'Z')
+            if((!use_apostrophe || *c != '\'') && (*c < 'A' || *c > 'Z'))
             {
                 skip_word = true;
                 break;
@@ -375,7 +383,7 @@ int main(int argc, char * argv[])
 
     GHashTable * seen_groups = g_hash_table_new_full(&g_str_hash, &g_str_equal, &free, NULL);
     GPtrArray * prefix = g_ptr_array_new_with_free_func(&free);
-    find_words(ltrs, dictionary, prefix, seen_groups, show_partial, permutations, start_ltr_count);
+    find_words(ltrs, dictionary, prefix, seen_groups, show_partial, permutations, use_apostrophe, start_ltr_count);
 
     g_hash_table_destroy(seen_groups);
     g_ptr_array_free(prefix, true);

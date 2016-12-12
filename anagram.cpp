@@ -39,6 +39,7 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
                 std::unordered_set<std::string> & seen_groups,
                 const bool show_partial,
                 const bool permutations,
+                const bool use_apostrophe,
                 const std::size_t start_ltr_count)
 {
     if(std::accumulate(ltrs.begin(), ltrs.end(), 0) == 0)
@@ -55,7 +56,7 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
 
         for(auto & c: word)
         {
-            if(c == '\'')
+            if(use_apostrophe && c == '\'')
                 continue;
 
             if(word_ltrs[c - 'A'] == 0)
@@ -78,11 +79,16 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
             std::string anagram;
             for(const auto & prefix_word: new_prefix)
             {
-                for(auto & c: prefix_word)
+                if(use_apostrophe)
                 {
-                    if(c != '\'')
-                        ++ltr_count;
+                    for(auto & c: prefix_word)
+                    {
+                        if(c != '\'')
+                            ++ltr_count;
+                    }
                 }
+                else
+                    ltr_count += prefix_word.size();
 
                 if(!anagram.empty())
                     anagram += " ";
@@ -121,6 +127,7 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
                    seen_groups,
                    show_partial,
                    permutations,
+                   use_apostrophe,
                    start_ltr_count);
 }
 
@@ -213,6 +220,7 @@ int main(int argc, char * argv[])
         ("help,h", "Show this help message and exit")
         ("show-partial,p", "Show partial anagrams. Full anagrams will be preceded by an '*'")
         ("permutations,r", "Generate each permutation instead of each combination. Much slower, but uses much less memory")
+        ("no-apostrophe,n", "Don't generate words with apostrophes")
         ("dictionary,d", po::value<std::string>()->default_value("/usr/share/dict/words")->value_name("DICTIONARY"),
             "Dictionary file");
 
@@ -249,6 +257,7 @@ int main(int argc, char * argv[])
 
     bool show_partial = vm.count("show-partial") > 0;
     bool permutations = vm.count("permutations") > 0;
+    bool use_apostrophe = vm.count("no-apostrophe") == 0;
     std::string dictionary_filename = vm["dictionary"].as<std::string>();
 
     // get letter counts
@@ -299,7 +308,7 @@ int main(int argc, char * argv[])
             for(auto &c: word)
             {
                 c = std::toupper(c);
-                if(c < 'A' || c > 'Z')
+                if((!use_apostrophe || c != '\'') && (c < 'A' || c > 'Z'))
                 {
                     skip_word = true;
                     break;
@@ -334,7 +343,7 @@ int main(int argc, char * argv[])
     }
 
     std::unordered_set<std::string> seen_groups;
-    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, show_partial, permutations, start_ltr_count);
+    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, show_partial, permutations, use_apostrophe, start_ltr_count);
 
     return EXIT_SUCCESS;
 }
