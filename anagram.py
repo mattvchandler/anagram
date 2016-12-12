@@ -25,10 +25,10 @@ import argparse, sys
 p = argparse.ArgumentParser(description = "Anagram generator")
 
 p.add_argument("-p", "--show-partial", action="store_true",
-        help = "Show partial anagrams. Full anagrams will be preceeded by an '*'")
+        help = "Show partial anagrams. Full anagrams will be preceded by an '*'")
 
 p.add_argument("-r", "--permutations", action="store_true",
-        help = "Generate each permutaton instead of each combination. Much slower, but uses much less memory")
+        help = "Generate each permutation instead of each combination. Much slower, but uses much less memory")
 
 p.add_argument("-d", "--dictionary", default="/usr/share/dict/words",
         help = "Dictionary file (defaults to /usr/share/dict/words)")
@@ -53,6 +53,7 @@ def find_words(ltrs, word_list, prefix = tuple()):
         for c in word:
             if c == "'":
                 continue
+
             c = ord(c)
             if c < ord('A') or c > ord('Z') or word_ltrs[c - ord('A')] == 0:
                 break

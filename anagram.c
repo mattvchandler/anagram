@@ -228,6 +228,10 @@ int main(int argc, char * argv[])
         {"permutations", no_argument, NULL, 'r'}
     };
 
+    char * prog_name = argv[0] + strlen(argv[0]);
+    while(prog_name != argv[0] && *(prog_name - 1) != '/' && *(prog_name - 1) != '\\')
+        --prog_name;
+
     int ind = 0;
     while((opt = getopt_long(argc, argv, ":hd:pr", longopts, &ind)) != -1)
     {
@@ -244,28 +248,29 @@ int main(int argc, char * argv[])
             permutations = true;
             break;
         case 'h':
-            puts("usage: anagram.py [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n\n"
+            printf("usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n\n", prog_name);
+            puts(
                 "Anagram generator\n\n"
                 "positional arguments:\n"
                 "  TEXT                  Text to generate anagrams for\n\n"
                 "optional arguments:\n"
                 "  -h, --help            Show this help message and exit\n"
-                "  -p, --show-partial    Show partial anagrams. Full anagrams will be preceeded\n"
+                "  -p, --show-partial    Show partial anagrams. Full anagrams will be preceded\n"
                 "                        by an '*'\n"
-                "  -r, --permutations    Generate each permutaton instead of each combination\n"
+                "  -r, --permutations    Generate each permutation instead of each combination\n"
                 "                        Much slower, but uses much less memory\n"
                 "  -d DICTIONARY, --dictionary DICTIONARY\n"
                 "                        Dictionary file (defaults to /usr/share/dict/words)");
             return EXIT_SUCCESS;
         case ':':
             fprintf(stderr, "Argument required for -%c\n", (char)optopt);
-            fprintf(stderr, " usage: anagram.py [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n");
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         case '?':
         default:
             fprintf(stderr, "Unknown option: -%c\n", (char)optopt);
-            fprintf(stderr, " usage: anagram.py [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n");
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         }
@@ -305,16 +310,16 @@ int main(int argc, char * argv[])
 
     GHashTable * dictionary_set = g_hash_table_new_full(&g_str_hash, &g_str_equal, &free, NULL);
 
-    char * line = NULL;
+    char * word = NULL;
     size_t line_len = 0;
-    while(getline(&line, &line_len, dictionary_file) >= 0)
+    while(getline(&word, &line_len, dictionary_file) >= 0)
     {
-        line[strlen(line) - 1] = '\0';
+        word[strlen(word) - 1] = '\0';
 
-        for(char * c = line; *c; ++c)
+        for(char * c = word; *c; ++c)
             *c = toupper(*c);
 
-        if(strlen(line) <= 2)
+        if(strlen(word) <= 2)
         {
             // keep sorted so we can bsearch
             static const char * const legal_small_words[] =
@@ -328,24 +333,24 @@ int main(int argc, char * argv[])
                 "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"
             };
 
-            if(bsearch(&line, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper))
-                g_hash_table_insert(dictionary_set, strdup(line), NULL);
+            if(bsearch(&word, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper))
+                g_hash_table_insert(dictionary_set, strdup(word), NULL);
 
         }
         else
-            g_hash_table_insert(dictionary_set, strdup(line), NULL);
+            g_hash_table_insert(dictionary_set, strdup(word), NULL);
     }
     if(ferror(dictionary_file))
     {
         fprintf(stderr, "Error reading dictionary file %s: %s\n", dictionary_filename, strerror(errno));
         free(dictionary_filename);
-        free(line);
+        free(word);
         fclose(dictionary_file);
         g_hash_table_destroy(dictionary_set);
         return EXIT_FAILURE;
     }
 
-    free(line);
+    free(word);
     fclose(dictionary_file);
 
     GPtrArray * dictionary = g_ptr_array_sized_new(g_hash_table_size(dictionary_set));

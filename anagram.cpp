@@ -211,8 +211,8 @@ int main(int argc, char * argv[])
 
     optional_desc.add_options()
         ("help,h", "Show this help message and exit")
-        ("show-partial,p", "Show partial anagrams. Full anagrams will be preceeded by an '*'")
-        ("permutations,r", "Generate each permutaton instead of each combination. Much slower, but uses much less memory")
+        ("show-partial,p", "Show partial anagrams. Full anagrams will be preceded by an '*'")
+        ("permutations,r", "Generate each permutation instead of each combination. Much slower, but uses much less memory")
         ("dictionary,d", po::value<std::string>()->default_value("/usr/share/dict/words")->value_name("DICTIONARY"),
             "Dictionary file");
 
@@ -247,6 +247,10 @@ int main(int argc, char * argv[])
         return EXIT_FAILURE;
     }
 
+    bool show_partial = vm.count("show-partial") > 0;
+    bool permutations = vm.count("permutations") > 0;
+    std::string dictionary_filename = vm["dictionary"].as<std::string>();
+
     // get letter counts
     std::array<std::size_t, ALPHABET_LEN> ltrs;
     std::fill(ltrs.begin(), ltrs.end(), 0);
@@ -271,14 +275,14 @@ int main(int argc, char * argv[])
     }
 
     // open dictionary file
-    std::ifstream dictionary_file(vm["dictionary"].as<std::string>());
+    std::ifstream dictionary_file(dictionary_filename);
     try
     {
         dictionary_file.exceptions(std::ifstream::failbit | std::ifstream::badbit); // throw on error OR failure
     }
     catch(std::system_error & e)
     {
-        std::cerr<<"Error opening "<<vm["dictionary"].as<std::string>()<<": "<<std::strerror(errno)<<std::endl;
+        std::cerr<<"Error opening "<<dictionary_filename<<": "<<std::strerror(errno)<<std::endl;
         return EXIT_FAILURE;
     }
 
@@ -316,12 +320,12 @@ int main(int argc, char * argv[])
     }
     catch(std::system_error & e)
     {
-        std::cerr<<"Error reading "<<vm["dictionary"].as<std::string>()<<": "<<std::strerror(errno)<<std::endl;
+        std::cerr<<"Error reading "<<dictionary_filename<<": "<<std::strerror(errno)<<std::endl;
         return EXIT_FAILURE;
     }
 
     std::unordered_set<std::string> seen_groups;
-    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, vm.count("show-partial") > 0, vm.count("permutations") > 0, start_ltr_count);
+    find_words(ltrs, dictionary, std::vector<std::string>(), seen_groups, show_partial, permutations, start_ltr_count);
 
     return EXIT_SUCCESS;
 }
