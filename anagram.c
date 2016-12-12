@@ -365,6 +365,8 @@ int main(int argc, char * argv[])
         }
     }
 
+    g_ptr_array_sort(dictionary, &strcmp_wrapper);
+
     // steal, b/c all strings now owned by GPtrArray dictionary
     g_hash_table_steal_all(dictionary_set);
     g_hash_table_destroy(dictionary_set);

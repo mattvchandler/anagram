@@ -317,6 +317,7 @@ int main(int argc, char * argv[])
 
         // put words into set to remove dupes. now put them into an array
         dictionary.insert(dictionary.end(), dictionary_set.begin(), dictionary_set.end());
+        std::sort(dictionary.begin(), dictionary.end());
     }
     catch(std::system_error & e)
     {

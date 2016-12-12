@@ -112,4 +112,4 @@ for word in open(args.dictionary, "r").readlines():
     if len(word) > 2 or word in legal_small_words:
         dictionary_set.add(word)
 
-find_words(ltrs, list(dictionary_set))
+find_words(ltrs, sorted(dictionary_set))
