@@ -316,28 +316,30 @@ int main(int argc, char * argv[])
     {
         word[strlen(word) - 1] = '\0';
 
+        bool skip_word = false;
         for(char * c = word; *c; ++c)
-            *c = toupper(*c);
-
-        if(strlen(word) <= 2)
         {
-            // keep sorted so we can bsearch
-            static const char * const legal_small_words[] =
+            *c = toupper(*c);
+            if(*c < 'A' || *c > 'Z')
             {
-                "A",
-                "AH", "AM", "AN", "AS", "AT", "BE", "BY", "DC", "DO",
-                "DR", "EX", "GO", "HA", "HE", "HI", "HO",
-                "I",
-                "IF", "II", "IN", "IS", "IT", "LA", "LO", "MA", "ME", "MR",
-                "MS", "MY", "NO", "OF", "OH", "OK", "ON", "OR", "OW", "OX",
-                "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"
-            };
-
-            if(bsearch(&word, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper))
-                g_hash_table_insert(dictionary_set, strdup(word), NULL);
-
+                skip_word = true;
+                break;
+            }
         }
-        else
+
+        // keep sorted so we can bsearch
+        static const char * const legal_small_words[] =
+        {
+            "A",
+            "AH", "AM", "AN", "AS", "AT", "BE", "BY", "DC", "DO", "DR",
+            "EX", "GO", "HA", "HE", "HI", "HO",
+            "I",
+            "IF", "II", "IN", "IS", "IT", "LA", "LO", "MA", "ME", "MR",
+            "MS", "MY", "NO", "OF", "OH", "OK", "ON", "OR", "OW", "OX",
+            "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"
+        };
+
+        if(!skip_word && (strlen(word) > 2 || bsearch(&word, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper)))
             g_hash_table_insert(dictionary_set, strdup(word), NULL);
     }
     if(ferror(dictionary_file))

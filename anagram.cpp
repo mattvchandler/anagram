@@ -58,7 +58,7 @@ void find_words(const std::array<std::size_t, ALPHABET_LEN> & ltrs,
             if(c == '\'')
                 continue;
 
-            if(c < 'A' || c > 'Z' || word_ltrs[c - 'A'] == 0)
+            if(word_ltrs[c - 'A'] == 0)
             {
                 use_word = false;
                 break;
@@ -295,8 +295,16 @@ int main(int argc, char * argv[])
         std::string word;
         while(std::getline(dictionary_file, word, '\n'))
         {
+            bool skip_word = false;
             for(auto &c: word)
+            {
                 c = std::toupper(c);
+                if(c < 'A' || c > 'Z')
+                {
+                    skip_word = true;
+                    break;
+                }
+            }
 
             static const std::unordered_set<std::string> legal_small_words
             {
@@ -309,7 +317,7 @@ int main(int argc, char * argv[])
                 "UP", "US", "WE"
             };
 
-            if(word.size() > 2 || legal_small_words.count(word))
+            if(!skip_word && (word.size() > 2 || legal_small_words.count(word)))
             {
                 dictionary_set.emplace(word);
             }

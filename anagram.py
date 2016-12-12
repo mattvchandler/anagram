@@ -55,7 +55,8 @@ def find_words(ltrs, word_list, prefix = tuple()):
                 continue
 
             c = ord(c)
-            if c < ord('A') or c > ord('Z') or word_ltrs[c - ord('A')] == 0:
+
+            if word_ltrs[c - ord('A')] == 0:
                 break
 
             word_ltrs[c - ord('A')] -= 1
@@ -108,8 +109,13 @@ legal_small_words = set(["A", "I", # , "C", "R", "U", "N")
 dictionary_set = set()
 for word in open(args.dictionary, "r").readlines():
     word = word.strip().upper()
+    skip_word = False
+    for c in word:
+        if ord(c) < ord('A') or ord(c) > ord('Z'):
+            skip_word = True
+            break
 
-    if len(word) > 2 or word in legal_small_words:
+    if not skip_word and (len(word) > 2 or word in legal_small_words):
         dictionary_set.add(word)
 
 find_words(ltrs, sorted(dictionary_set))
