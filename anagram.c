@@ -269,6 +269,7 @@ int main(int argc, char * argv[])
                 "  -n, --no-apostrophe   Don't generate words with apostrophes\n"
                 "  -d DICTIONARY, --dictionary DICTIONARY\n"
                 "                        Dictionary file (defaults to /usr/share/dict/words)");
+            free(dictionary_filename);
             return EXIT_SUCCESS;
         case ':':
             fprintf(stderr, "Argument required for -%c\n", (char)optopt);
