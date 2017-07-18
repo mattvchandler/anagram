@@ -33,6 +33,9 @@ p.add_argument("-r", "--permutations", action="store_true",
 p.add_argument("-n", "--no-apostrophe", action="store_true",
         help = "Don't generate words with apostrophes")
 
+p.add_argument("-s", "--small-words", action="store_true",
+        help = "Restrict small (<= 2 letters) words to a predefined set")
+
 p.add_argument("-d", "--dictionary", default="/usr/share/dict/words",
         help = "Dictionary file (defaults to /usr/share/dict/words)")
 
@@ -107,11 +110,12 @@ ltrs = [0] * 26
 for l in start:
     ltrs[ord(l) - ord('A')] += 1
 
-legal_small_words = set(["A", "I", # , "C", "R", "U", "N")
-    "AH", "AM", "AN", "AS", "AT", "BE", "BY", "DC", "DO", "DR", "EX", "GO",
-    "HA", "HE", "HI", "HO", "IF", "II", "IN", "IS", "IT", "LA", "LO", "MA",
-    "ME", "MR", "MS", "MY", "NO", "OF", "OH", "OK", "ON", "OR", "OW", "OX",
-    "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"])
+if args.small_words:
+    legal_small_words = set(["A", "I", # , "C", "R", "U", "N")
+        "AH", "AM", "AN", "AS", "AT", "BE", "BY", "DC", "DO", "DR", "EX", "GO",
+        "HA", "HE", "HI", "HO", "IF", "II", "IN", "IS", "IT", "LA", "LO", "MA",
+        "ME", "MR", "MS", "MY", "NO", "OF", "OH", "OK", "ON", "OR", "OW", "OX",
+        "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"])
 
 dictionary_set = set()
 for word in open(args.dictionary, "r").readlines():
@@ -122,7 +126,7 @@ for word in open(args.dictionary, "r").readlines():
             skip_word = True
             break
 
-    if not skip_word and (len(word) > 2 or word in legal_small_words):
+    if not skip_word and (not args.small_words or len(word) > 2 or word in legal_small_words):
         dictionary_set.add(word)
 
 find_words(ltrs, sorted(dictionary_set))

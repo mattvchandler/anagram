@@ -221,6 +221,7 @@ int main(int argc, char * argv[])
         ("show-partial,p", "Show partial anagrams. Full anagrams will be preceded by an '*'")
         ("permutations,r", "Generate each permutation instead of each combination. Much slower, but uses much less memory")
         ("no-apostrophe,n", "Don't generate words with apostrophes")
+        ("small-words,s", "Restrict small (<= 2 letters) words to a predefined set")
         ("dictionary,d", po::value<std::string>()->default_value("/usr/share/dict/words")->value_name("DICTIONARY"),
             "Dictionary file");
 
@@ -258,6 +259,7 @@ int main(int argc, char * argv[])
     bool show_partial = vm.count("show-partial") > 0;
     bool permutations = vm.count("permutations") > 0;
     bool use_apostrophe = vm.count("no-apostrophe") == 0;
+    bool restrict_small_words = vm.count("small-words") > 0;
     std::string dictionary_filename = vm["dictionary"].as<std::string>();
 
     // get letter counts
@@ -326,7 +328,7 @@ int main(int argc, char * argv[])
                 "UP", "US", "WE"
             };
 
-            if(!skip_word && (word.size() > 2 || legal_small_words.count(word)))
+            if(!skip_word && (!restrict_small_words || word.size() > 2 || legal_small_words.count(word)))
             {
                 dictionary_set.emplace(word);
             }

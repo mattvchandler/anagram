@@ -217,6 +217,7 @@ int main(int argc, char * argv[])
     bool show_partial = false;
     bool permutations = false;
     bool use_apostrophe = true;
+    bool restrict_small_words = false;
     char * dictionary_filename = strdup("/usr/share/dict/words");
 
     int opt = 0;
@@ -230,6 +231,7 @@ int main(int argc, char * argv[])
         {"show-partial", no_argument, NULL, 'p'},
         {"permutations", no_argument, NULL, 'r'},
         {"no-apostrophe", no_argument, NULL, 'n'},
+        {"small-words", no_argument, NULL, 's'}
     };
 
     char * prog_name = argv[0] + strlen(argv[0]);
@@ -237,7 +239,7 @@ int main(int argc, char * argv[])
         --prog_name;
 
     int ind = 0;
-    while((opt = getopt_long(argc, argv, ":hd:prn", longopts, &ind)) != -1)
+    while((opt = getopt_long(argc, argv, ":hd:prns", longopts, &ind)) != -1)
     {
         switch(opt)
         {
@@ -254,8 +256,11 @@ int main(int argc, char * argv[])
         case 'n':
             use_apostrophe = false;
             break;
+        case 's':
+            restrict_small_words = true;
+            break;
         case 'h':
-            printf("usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n\n", prog_name);
+            printf("usage: %s [-h] [-p] [-r] [-n] [-s] [-d DICTIONARY] TEXT [TEXT ...]\n\n", prog_name);
             puts(
                 "Anagram generator\n\n"
                 "positional arguments:\n"
@@ -267,19 +272,21 @@ int main(int argc, char * argv[])
                 "  -r, --permutations    Generate each permutation instead of each combination\n"
                 "                        Much slower, but uses much less memory\n"
                 "  -n, --no-apostrophe   Don't generate words with apostrophes\n"
+                "  -s  --small-words     Restrict small (<= 2 letters) words to a predefined\n"
+                "                        set\n"
                 "  -d DICTIONARY, --dictionary DICTIONARY\n"
                 "                        Dictionary file (defaults to /usr/share/dict/words)");
             free(dictionary_filename);
             return EXIT_SUCCESS;
         case ':':
             fprintf(stderr, "Argument required for -%c\n", (char)optopt);
-            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-s] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         case '?':
         default:
             fprintf(stderr, "Unknown option: -%c\n", (char)optopt);
-            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
+            fprintf(stderr, " usage: %s [-h] [-p] [-r] [-n] [-s] [-d DICTIONARY] TEXT [TEXT ...]\n", prog_name);
             free(dictionary_filename);
             return EXIT_FAILURE;
         }
@@ -348,7 +355,7 @@ int main(int argc, char * argv[])
             "PA", "PI", "SO", "ST", "TO", "UP", "US", "WE"
         };
 
-        if(!skip_word && (strlen(word) > 2 || bsearch(&word, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper)))
+        if(!skip_word && (!restrict_small_words || strlen(word) > 2 || bsearch(&word, legal_small_words, sizeof(legal_small_words) / sizeof(legal_small_words[0]), sizeof(legal_small_words[0]), &strcmp_wrapper)))
             g_hash_table_insert(dictionary_set, strdup(word), NULL);
     }
     if(ferror(dictionary_file))
